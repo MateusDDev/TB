@@ -4,20 +4,20 @@ import * as chai from 'chai';
 import chaiHttp = require('chai-http');
 
 import { app } from '../app';
-import Example from '../database/models/ExampleModel';
 
 import { Response } from 'superagent';
+
 
 chai.use(chaiHttp);
 
 const { expect } = chai;
 
-describe('Seu teste', () => {
+describe('Testes do App', () => {
   /**
    * Exemplo do uso de stubs com tipos
    */
 
-  // let chaiHttpResponse: Response;
+  let chaiHttpResponse: Response;
 
   // before(async () => {
   //   sinon
@@ -39,7 +39,14 @@ describe('Seu teste', () => {
   //   expect(...)
   // });
 
-  it('Seu sub-teste', () => {
-    expect(false).to.be.eq(true);
+  it('Verifica se a API está no ar', async () => {
+    chaiHttpResponse = await chai.request(app).get('/');
+
+    expect(chaiHttpResponse.body).to.be.deep.equal({ ok: true });
+    expect(chaiHttpResponse.status).to.be.equal(200);
   });
+
+  afterEach(() => {
+    sinon.restore();
+  })
 });

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import ICustomError from '../Interfaces/ICustomError';
+import ICustomError from '../interfaces/ICustomError';
 
 function errorMiddleware(error: ICustomError, _req: Request, res: Response, _next: NextFunction) {
   const status = error.statusCode || 500;
