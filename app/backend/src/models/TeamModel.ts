@@ -10,4 +10,10 @@ export default class TeamModel implements ITeamModel {
 
     return teams;
   }
+
+  async findById(id: number): Promise<ITeam | null> {
+    const team = await this.model.findByPk(id);
+
+    return team;
+  }
 }

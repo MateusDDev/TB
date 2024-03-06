@@ -4,6 +4,12 @@ const teams = [
     { id: 3, teamName: "Botafogo" }
 ];
 
-export {
+const team = {
+    id: 5,
+    teamName: "Cruzeiro"
+}
+
+export default {
     teams,
+    team,
 }
