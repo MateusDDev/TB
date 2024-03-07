@@ -40,7 +40,7 @@ describe('Testes da rota Login', () => {
         chaiHttpResponse = await chai.request(app).post('/login').send(loginMock.invalidLogin);
 
         expect(chaiHttpResponse.status).to.be.equal(401);
-        expect(chaiHttpResponse.body).to.be.deep.equal({ message: 'Invalid user' });
+        expect(chaiHttpResponse.body).to.be.deep.equal({ message: 'Invalid email or password' });
     })
 
     afterEach(() => {

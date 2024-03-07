@@ -15,7 +15,7 @@ const loginWithoutPassword = {
 
 const invalidLogin = {
     email: 'admin@admin.com',
-    password: 'secret'
+    password: 'password'
 }
 
 export default {
