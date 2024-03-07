@@ -1,5 +1,5 @@
-export type ServiceResponseErrorMessages = 'INVALID_DATA' |
-'UNAUTHORIZED' | 'NOT_FOUND' | 'CONFLICT';
+export type ServiceResponseErrorMessages =
+'UNAUTHORIZED' | 'NOT_FOUND' | 'CONFLICT' | 'BAD_REQUEST';
 export type ServiceResponseSuccessMessages = 'SUCCESSFUL' |
 'CREATED';
 

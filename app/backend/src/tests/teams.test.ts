@@ -33,4 +33,8 @@ describe('Testes da rota Teams', () => {
         expect(chaiHttpResponse.status).to.be.equal(200);
         expect(chaiHttpResponse.body).to.be.deep.equal(teamsMock.team);
     })
+
+    afterEach(() => {
+        sinon.restore();
+    })
 })
