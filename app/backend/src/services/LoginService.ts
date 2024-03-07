@@ -1,6 +1,6 @@
 import * as bcrypt from 'bcryptjs';
 import { ServiceResponse } from '../interfaces/ServiceResponse';
-import { ILogin, IToken } from '../interfaces/ILogin';
+import { ILogin, ILoginPayload, IToken } from '../interfaces/ILogin';
 import { IUserModel } from '../interfaces/users/IUserModel';
 import UserModel from '../models/UserModel';
 import JWT from '../utils/JWT';
@@ -42,7 +42,11 @@ export default class LoginService {
       return { status: 'UNAUTHORIZED', data: { message: 'Invalid email or password' } };
     }
 
-    const token = this.jwtService.sign({ email });
+    const payload: ILoginPayload = {
+      email,
+    };
+
+    const token = this.jwtService.sign(payload);
 
     return { status: 'SUCCESSFUL', data: { token } };
   }
