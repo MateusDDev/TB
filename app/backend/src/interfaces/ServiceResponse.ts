@@ -3,9 +3,13 @@ export type ServiceResponseErrorMessages =
 export type ServiceResponseSuccessMessages = 'SUCCESSFUL' |
 'CREATED';
 
+export type MessageType = {
+  message: string
+};
+
 export type ServiceResponseError = {
   status: ServiceResponseErrorMessages,
-  data: { message: string }
+  data: MessageType,
 };
 
 export type ServiceResponseSuccess<T> = {

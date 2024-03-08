@@ -8,6 +8,7 @@ import { app } from '../app';
 import { Response } from 'superagent';
 import SequelizeMatch from '../database/models/SequelizeMatch';
 import matchMock from './mocks/match.mock';
+import JWT from '../utils/JWT';
 
 chai.use(chaiHttp);
 
@@ -41,6 +42,23 @@ describe('Testes da rota Matches', () => {
 
         expect(chaiHttpResponse.status).to.be.equal(400);
         expect(chaiHttpResponse.body).to.be.deep.equal({ message: "Invalid query, expected \"true\" or \"false\"" });
+    });
+
+    it('Testa se atualiza uma partida pelo id', async () => {
+        sinon.stub(SequelizeMatch, 'update').resolves([1]);
+        sinon.stub(JWT, 'sign').returns('validToken');
+        sinon.stub(JWT, 'verify').returns({ email: 'admin@admin.com' })
+
+        chaiHttpResponse = await chai.request(app)
+            .patch('/matches/1')
+            .set('authorization', 'validToken')
+            .send({
+                homeTeamGoals: 3,
+                awayTeamGoals: 1,
+            });
+
+        expect(chaiHttpResponse.status).to.be.equal(200);
+        expect(chaiHttpResponse.body).to.be.deep.equal({ message: "Match updated" });
     });
 
     afterEach(() => {
