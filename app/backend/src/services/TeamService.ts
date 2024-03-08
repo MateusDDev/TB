@@ -3,12 +3,12 @@ import { ITeam } from '../interfaces/teams/ITeam';
 import TeamModel from '../models/TeamModel';
 
 export default class TeamService {
-  constructor(private model = new TeamModel()) {
+  constructor(private teamModel = new TeamModel()) {
 
   }
 
   async findAll(): Promise<ServiceResponse<ITeam[]>> {
-    const teams = await this.model.findAll();
+    const teams = await this.teamModel.findAll();
 
     return {
       status: 'SUCCESSFUL',
@@ -17,7 +17,7 @@ export default class TeamService {
   }
 
   async findById(id: number): Promise<ServiceResponse<ITeam>> {
-    const team = await this.model.findById(id);
+    const team = await this.teamModel.findById(id);
     if (!team) {
       return {
         status: 'NOT_FOUND',
