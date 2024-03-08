@@ -15,4 +15,20 @@ export default class MatchService {
       data: matches,
     };
   }
+
+  async findAllByStatus(status: 'true' | 'false'): Promise<ServiceResponse<IMatch[]>> {
+    const matches = await this.matchModel.findAllByStatus(status);
+
+    if (!matches) {
+      return {
+        status: 'NOT_FOUND',
+        data: { message: 'Match not found' },
+      };
+    }
+
+    return {
+      status: 'SUCCESSFUL',
+      data: matches,
+    };
+  }
 }

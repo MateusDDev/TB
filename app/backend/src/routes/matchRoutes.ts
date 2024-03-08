@@ -5,6 +5,15 @@ const matchController = new MatchController();
 
 const router = Router();
 
-router.get('/', (req: Request, res: Response) => matchController.findAllMatches(req, res));
+router.get(
+  '/',
+  (req: Request, res: Response) => {
+    if (req.query.inProgress !== undefined) {
+      matchController.findAllMatchesByStatus(req, res);
+    } else {
+      matchController.findAllMatches(req, res);
+    }
+  },
+);
 
 export default router;

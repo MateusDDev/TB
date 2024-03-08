@@ -7,7 +7,7 @@ export default class MatchModel implements IMatchModel {
   private model = SequelizeMatch;
   private association = SequelizeTeam;
 
-  findAll(): Promise<IMatch[]> {
+  async findAll(): Promise<IMatch[]> {
     const matches = this.model.findAll({
       include: [
         {
@@ -25,8 +25,29 @@ export default class MatchModel implements IMatchModel {
     return matches;
   }
 
-  findById(id: number): Promise<IMatch | null> {
+  async findById(id: number): Promise<IMatch | null> {
     const match = this.model.findByPk(id);
     return match;
+  }
+
+  async findAllByStatus(status: 'true' | 'false'): Promise<IMatch[] | null> {
+    const inProgress = status === 'true';
+    const matches = this.model.findAll({
+      where: { inProgress },
+      include: [
+        {
+          model: this.association,
+          as: 'awayTeam',
+          attributes: { exclude: ['id'] },
+        },
+        {
+          model: this.association,
+          as: 'homeTeam',
+          attributes: { exclude: ['id'] },
+        },
+      ],
+    });
+
+    return matches;
   }
 }

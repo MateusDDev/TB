@@ -7,9 +7,19 @@ export default class MatchController {
     private service = new MatchService(),
   ) {}
 
-  async findAllMatches(req: Request, res: Response): Promise<Response> {
+  async findAllMatches(_req: Request, res: Response): Promise<Response> {
     const { status, data } = await this.service.findAll();
 
+    return res.status(mapStatusHTTP(status)).json(data);
+  }
+
+  async findAllMatchesByStatus(req: Request, res: Response): Promise<Response> {
+    const { inProgress } = req.query;
+    if (inProgress !== 'true' && inProgress !== 'false') {
+      return res.status(400).json({ message: 'Invalid query, expected "true" or "false"' });
+    }
+
+    const { status, data } = await this.service.findAllByStatus(inProgress);
     return res.status(mapStatusHTTP(status)).json(data);
   }
 }
