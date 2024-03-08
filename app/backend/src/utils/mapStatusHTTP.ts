@@ -11,6 +11,7 @@ const mapStatusHTTP = (
     case 'NOT_FOUND': return 404;
     case 'CONFLICT': return 409;
     case 'UNAUTHORIZED': return 401;
+    case 'CREATED': return 201;
     default: return 500;
   }
 };

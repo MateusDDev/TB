@@ -60,4 +60,10 @@ export default class MatchModel implements IMatchModel {
 
     return this.findById(id);
   }
+
+  async create(newMatch: INewEntity<IMatch>): Promise<IMatch> {
+    const match = await this.model.create(newMatch);
+
+    return match;
+  }
 }

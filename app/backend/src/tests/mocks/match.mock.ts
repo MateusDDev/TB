@@ -44,8 +44,25 @@ const matches = [
     },
 ];
 
+const newMatch = {
+    homeTeamId: 16,
+    homeTeamGoals: 1,
+    awayTeamId: 8,
+    awayTeamGoals: 1,
+}
+
+const createdMatch = {
+    id: 1,
+    homeTeamId: 16,
+    homeTeamGoals: 1,
+    awayTeamId: 8,
+    awayTeamGoals: 1,
+    inProgress: true,
+}
 
 export default {
     match,
     matches,
+    newMatch,
+    createdMatch,
 }

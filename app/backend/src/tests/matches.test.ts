@@ -16,6 +16,12 @@ const { expect } = chai;
 
 describe('Testes da rota Matches', () => {
     let chaiHttpResponse: Response;
+    const JWTToken = 'validToken';
+
+    beforeEach(() => {
+        sinon.stub(JWT, 'sign').returns(JWTToken);
+        sinon.stub(JWT, 'verify').returns({ email: 'admin@admin.com' })
+    })
 
     it('Testa se retorna todas as partidas corretamente', async () => {
         sinon.stub(SequelizeMatch, 'findAll').resolves(matchMock.matches as any)
@@ -46,12 +52,10 @@ describe('Testes da rota Matches', () => {
 
     it('Testa se atualiza uma partida pelo id', async () => {
         sinon.stub(SequelizeMatch, 'update').resolves([1]);
-        sinon.stub(JWT, 'sign').returns('validToken');
-        sinon.stub(JWT, 'verify').returns({ email: 'admin@admin.com' })
 
         chaiHttpResponse = await chai.request(app)
             .patch('/matches/1')
-            .set('authorization', 'validToken')
+            .set('authorization', JWTToken)
             .send({
                 homeTeamGoals: 3,
                 awayTeamGoals: 1,
@@ -60,6 +64,18 @@ describe('Testes da rota Matches', () => {
         expect(chaiHttpResponse.status).to.be.equal(200);
         expect(chaiHttpResponse.body).to.be.deep.equal({ message: "Match updated" });
     });
+
+    it('Testa se uma partida é cadastrada corretamente', async () => {
+        sinon.stub(SequelizeMatch, 'create').resolves(matchMock.createdMatch as any);
+
+        chaiHttpResponse = await chai.request(app)
+            .post('/matches')
+            .set('authorization', JWTToken)
+            .send(matchMock.newMatch)
+
+        expect(chaiHttpResponse.status).to.be.equal(201);
+        expect(chaiHttpResponse.body).to.be.deep.equal(matchMock.createdMatch);
+    })
 
     afterEach(() => {
         sinon.restore();
