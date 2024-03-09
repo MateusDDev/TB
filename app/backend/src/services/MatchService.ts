@@ -1,7 +1,7 @@
 import { INewEntity } from '../interfaces/INewEntity';
 import { MessageType, ServiceResponse } from '../interfaces/ServiceResponse';
 import { IMatch, INewMatch } from '../interfaces/matches/IMatch';
-import MatchModel from '../models/MacthModel';
+import MatchModel from '../models/MatchModel';
 import Schemas from './validations/Schemas';
 import TeamService from './TeamService';
 

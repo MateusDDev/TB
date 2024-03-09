@@ -1,5 +1,5 @@
 import { ServiceResponse } from '../interfaces/ServiceResponse';
-import MatchModel from '../models/MacthModel';
+import MatchModel from '../models/MatchModel';
 import { ILeaderboard } from '../interfaces/leaderboard/ILeaderboard';
 
 export default class LeaderboardService {
@@ -50,11 +50,11 @@ export default class LeaderboardService {
     return victories.reduce((acc, value) => acc + value, 0);
   }
 
-  private async getTeamGoals(teamId: number, isHomeTeam: boolean): Promise<number> {
+  private async getTeamGoals(teamId: number, isFavor: boolean): Promise<number> {
     const matches = await this.matchModel.findAllByStatus('false');
 
     const goals = matches.filter((match) => match.homeTeamId === teamId)
-      .map((m) => (isHomeTeam ? m.homeTeamGoals : m.awayTeamGoals));
+      .map((m) => (isFavor ? m.homeTeamGoals : m.awayTeamGoals));
 
     return goals.reduce((acc, value) => acc + value, 0);
   }
@@ -66,8 +66,8 @@ export default class LeaderboardService {
     const totalVictories = await this.getMatchResults(homeTeamId, 3);
     const totalDraws = await this.getMatchResults(homeTeamId, 1);
     const totalLosses = await this.getMatchResults(homeTeamId, 0);
-    const goalsFavor = await this.getTeamGoals(homeTeamId, false);
-    const goalsOwn = await this.getTeamGoals(homeTeamId, true);
+    const goalsFavor = await this.getTeamGoals(homeTeamId, true);
+    const goalsOwn = await this.getTeamGoals(homeTeamId, false);
 
     return {
       name: homeTeamName,
@@ -81,8 +81,10 @@ export default class LeaderboardService {
     };
   }
 
-  private static async orderLeaderboard(board: ILeaderboard[]): Promise<ILeaderboard[]> {
+  private static orderLeaderboard(board: ILeaderboard[]): ILeaderboard[] {
     return board.sort((a, b) => {
+      if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
+
       if (b.totalVictories !== a.totalVictories) {
         return b.totalVictories - a.totalVictories;
       }
@@ -91,8 +93,20 @@ export default class LeaderboardService {
         return b.goalsBalance - a.goalsBalance;
       }
 
-      return b.goalsOwn - a.goalsOwn;
+      return b.goalsFavor - a.goalsFavor;
     });
+  }
+
+  private static getUniqueTeams(leaderboard: ILeaderboard[]): ILeaderboard[] {
+    const names = leaderboard.map((item) => item.name);
+
+    const uniqueNames = names.filter((name, index) => names.indexOf(name) === index);
+
+    return uniqueNames.reduce((uniqueLeaderboard: ILeaderboard[], name: string) => {
+      const uniqueItem = leaderboard.find((item) => item.name === name);
+      if (uniqueItem) uniqueLeaderboard.push(uniqueItem);
+      return uniqueLeaderboard;
+    }, []);
   }
 
   async getLeaderboard(): Promise<ServiceResponse<ILeaderboard[]>> {
@@ -103,7 +117,7 @@ export default class LeaderboardService {
 
       const board: ILeaderboard = {
         ...build,
-        goalsBalance: LeaderboardService.goalDifference(build.goalsOwn, build.goalsFavor),
+        goalsBalance: LeaderboardService.goalDifference(build.goalsFavor, build.goalsOwn),
         efficiency: LeaderboardService.teamPerformance(build.totalPoints, build.totalGames),
       };
 
@@ -111,7 +125,8 @@ export default class LeaderboardService {
     });
 
     const board = await Promise.all(boardPromises);
-    const orderedBoard = await LeaderboardService.orderLeaderboard(board);
+    const uniqueTeams = LeaderboardService.getUniqueTeams(board);
+    const orderedBoard = LeaderboardService.orderLeaderboard(uniqueTeams);
     return {
       status: 'SUCCESSFUL',
       data: orderedBoard,

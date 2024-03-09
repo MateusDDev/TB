@@ -6,8 +6,8 @@ const board = [
         totalVictories: 1,
         totalDraws: 0,
         totalLosses: 0,
-        goalsFavor: 0,
-        goalsOwn: 2,
+        goalsFavor: 2,
+        goalsOwn: 0,
         goalsBalance: 2,
         efficiency: 100.00
     },
