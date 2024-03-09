@@ -59,7 +59,8 @@ export default class LeaderboardService {
     return goals.reduce((acc, value) => acc + value, 0);
   }
 
-  private async buildBoard(homeTeamId: number, homeTeamName: string): Promise<ILeaderboard> {
+  private async buildBoard(homeTeamId: number, homeTeamName: string):
+  Promise<Omit<ILeaderboard, 'goalsBalance' | 'efficiency'>> {
     const totalPoints = await this.getTotalPoints(homeTeamId);
     const totalGames = await this.getTotalGames(homeTeamId);
     const totalVictories = await this.getMatchResults(homeTeamId, 3);
@@ -68,7 +69,7 @@ export default class LeaderboardService {
     const goalsFavor = await this.getTeamGoals(homeTeamId, false);
     const goalsOwn = await this.getTeamGoals(homeTeamId, true);
 
-    const build: ILeaderboard = {
+    return {
       name: homeTeamName,
       totalPoints,
       totalGames,
@@ -78,22 +79,42 @@ export default class LeaderboardService {
       goalsFavor,
       goalsOwn,
     };
-    return build;
+  }
+
+  private static async orderLeaderboard(board: ILeaderboard[]): Promise<ILeaderboard[]> {
+    return board.sort((a, b) => {
+      if (b.totalVictories !== a.totalVictories) {
+        return b.totalVictories - a.totalVictories;
+      }
+
+      if (b.goalsBalance !== a.goalsBalance) {
+        return b.goalsBalance - a.goalsBalance;
+      }
+
+      return b.goalsOwn - a.goalsOwn;
+    });
   }
 
   async getLeaderboard(): Promise<ServiceResponse<ILeaderboard[]>> {
-    const macthes = await this.matchModel.findAllByStatus('false');
+    const matches = await this.matchModel.findAllByStatus('false');
 
-    const boardPromises = macthes.map(async ({ homeTeamId, homeTeam }) => {
+    const boardPromises = matches.map(async ({ homeTeamId, homeTeam }) => {
       const build = await this.buildBoard(homeTeamId, homeTeam.teamName);
 
-      return build;
+      const board: ILeaderboard = {
+        ...build,
+        goalsBalance: LeaderboardService.goalDifference(build.goalsOwn, build.goalsFavor),
+        efficiency: LeaderboardService.teamPerformance(build.totalPoints, build.totalGames),
+      };
+
+      return board;
     });
 
     const board = await Promise.all(boardPromises);
+    const orderedBoard = await LeaderboardService.orderLeaderboard(board);
     return {
       status: 'SUCCESSFUL',
-      data: board,
+      data: orderedBoard,
     };
   }
 }
