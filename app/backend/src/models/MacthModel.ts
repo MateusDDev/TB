@@ -1,5 +1,5 @@
 import { INewEntity } from '../interfaces/INewEntity';
-import { IMatch } from '../interfaces/matches/IMatch';
+import { IMatch, IMatchWithAssociations } from '../interfaces/matches/IMatch';
 import { IMatchModel } from '../interfaces/matches/IMacthModel';
 import SequelizeMatch from '../database/models/SequelizeMatch';
 import SequelizeTeam from '../database/models/SequelizeTeam';
@@ -8,7 +8,7 @@ export default class MatchModel implements IMatchModel {
   private model = SequelizeMatch;
   private association = SequelizeTeam;
 
-  async findAll(): Promise<IMatch[]> {
+  async findAll(): Promise<IMatchWithAssociations[]> {
     const matches = this.model.findAll({
       include: [
         {
@@ -23,7 +23,7 @@ export default class MatchModel implements IMatchModel {
         },
       ],
     });
-    return matches;
+    return matches as unknown as IMatchWithAssociations[];
   }
 
   async findById(id: number): Promise<IMatch | null> {
@@ -31,7 +31,7 @@ export default class MatchModel implements IMatchModel {
     return match;
   }
 
-  async findAllByStatus(status: 'true' | 'false'): Promise<IMatch[] | null> {
+  async findAllByStatus(status: 'true' | 'false'): Promise<IMatchWithAssociations[]> {
     const inProgress = status === 'true';
     const matches = this.model.findAll({
       where: { inProgress },
@@ -49,7 +49,7 @@ export default class MatchModel implements IMatchModel {
       ],
     });
 
-    return matches;
+    return matches as unknown as IMatchWithAssociations[];
   }
 
   async update(id: number, match: Partial<INewEntity<IMatch>>): Promise<IMatch | null> {
