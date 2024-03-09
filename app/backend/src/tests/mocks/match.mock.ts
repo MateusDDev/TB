@@ -60,9 +60,25 @@ const createdMatch = {
     inProgress: true,
 }
 
+const invalidNewMatch = {
+    homeTeamId: 1,
+    homeTeamGoals: 2,
+    awayTeamId: 1,
+    awayTeamGoals: 1,
+}
+
+const matchWithInvalidTeam = {
+    homeTeamId: 9999,
+    homeTeamGoals: 2,
+    awayTeamId: 1,
+    awayTeamGoals: 1,
+}
+
 export default {
     match,
     matches,
     newMatch,
     createdMatch,
+    invalidNewMatch,
+    matchWithInvalidTeam,
 }

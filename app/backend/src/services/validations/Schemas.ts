@@ -10,6 +10,17 @@ export default class Schemas {
     homeTeamId: Joi.number().min(1).required(),
   });
 
+  private static verifyTeams(homeId: number, awayId: number): ServiceResponse<MessageType> | null {
+    if (homeId === awayId) {
+      return {
+        status: 'UNPROCESSABLE_ENTITY',
+        data: { message: 'It is not possible to create a match with two equal teams' },
+      };
+    }
+
+    return null;
+  }
+
   public validateMatch(match: INewMatch): ServiceResponse<MessageType> | null {
     const { error } = this.matchSchema.validate(match);
 
@@ -18,6 +29,11 @@ export default class Schemas {
         status: 'BAD_REQUEST',
         data: { message: error.message },
       };
+    }
+
+    const conflict = Schemas.verifyTeams(match.homeTeamId, match.awayTeamId);
+    if (conflict) {
+      return conflict;
     }
 
     return null;

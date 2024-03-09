@@ -21,7 +21,7 @@ export default class TeamService {
     if (!team) {
       return {
         status: 'NOT_FOUND',
-        data: { message: 'Team not found' },
+        data: { message: 'There is no team with such id!' },
       };
     }
 

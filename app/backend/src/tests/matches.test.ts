@@ -77,6 +77,30 @@ describe('Testes da rota Matches', () => {
         expect(chaiHttpResponse.body).to.be.deep.equal(matchMock.createdMatch);
     })
 
+    it('Testa se retorna uma mensagem de erro caso sejam passados dois times iguais', async () => {
+        sinon.stub(SequelizeMatch, 'create').resolves({} as any);
+
+        chaiHttpResponse = await chai.request(app)
+            .post('/matches')
+            .set('authorization', JWTToken)
+            .send(matchMock.invalidNewMatch)
+
+        expect(chaiHttpResponse.status).to.be.equal(422);
+        expect(chaiHttpResponse.body).to.be.deep.equal({ message: 'It is not possible to create a match with two equal teams' });
+    })
+
+    it('Testa se retorna uma mensagem de erro caso seja passado um time que não existe', async () => {
+        sinon.stub(SequelizeMatch, 'create').resolves({} as any);
+
+        chaiHttpResponse = await chai.request(app)
+            .post('/matches')
+            .set('authorization', JWTToken)
+            .send(matchMock.matchWithInvalidTeam)
+
+        expect(chaiHttpResponse.status).to.be.equal(404);
+        expect(chaiHttpResponse.body).to.be.deep.equal({ message: 'There is no team with such id!' });
+    })
+
     afterEach(() => {
         sinon.restore();
     })
