@@ -163,4 +163,43 @@ export default class LeaderboardService {
     const orderedBoard = LeaderboardService.orderLeaderboard(uniqueTeams);
     return { status: 'SUCCESSFUL', data: orderedBoard };
   }
+
+  private static buildDefaultLeaderboard(homeItem: ILeaderboard, awayItem: ILeaderboard):
+  Omit<ILeaderboard, 'goalsBalance' | 'efficiency'> {
+    return {
+      name: homeItem.name,
+      totalPoints: homeItem.totalPoints + awayItem.totalPoints,
+      totalGames: homeItem.totalGames + awayItem.totalGames,
+      totalVictories: homeItem.totalVictories + awayItem.totalVictories,
+      totalDraws: homeItem.totalDraws + awayItem.totalDraws,
+      totalLosses: homeItem.totalLosses + awayItem.totalLosses,
+      goalsFavor: homeItem.goalsFavor + awayItem.goalsFavor,
+      goalsOwn: homeItem.goalsOwn + awayItem.goalsOwn,
+    };
+  }
+
+  async getDefaultLeadboard(): Promise<ServiceResponse<ILeaderboard[]>> {
+    const homeLeaderboard = (await this.getLeaderboard(true)).data as ILeaderboard[];
+    const awayLeaderboard = (await this.getLeaderboard(false)).data as ILeaderboard[];
+
+    const leaderboard: ILeaderboard[] = [];
+
+    for (let i = 0; i < homeLeaderboard.length; i += 1) {
+      const homeItem = homeLeaderboard[i];
+      const awayItem = awayLeaderboard.find((item) => item.name === homeItem.name);
+
+      if (awayItem) {
+        const build = LeaderboardService.buildDefaultLeaderboard(homeItem, awayItem);
+        const board: ILeaderboard = {
+          ...build,
+          goalsBalance: LeaderboardService.goalDifference(build.goalsFavor, build.goalsOwn),
+          efficiency: LeaderboardService.teamPerformance(build.totalPoints, build.totalGames),
+        };
+        leaderboard.push(board);
+      }
+    }
+
+    const orderedBoard = LeaderboardService.orderLeaderboard(leaderboard);
+    return { status: 'SUCCESSFUL', data: orderedBoard };
+  }
 }

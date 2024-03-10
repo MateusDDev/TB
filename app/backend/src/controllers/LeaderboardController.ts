@@ -18,4 +18,10 @@ export default class LeaderboardController {
 
     return res.status(mapStatusHTTP(status)).json(data);
   }
+
+  async getDefaultLeaderboard(_req: Request, res: Response): Promise<Response> {
+    const { status, data } = await this.leaderboardService.getDefaultLeadboard();
+
+    return res.status(mapStatusHTTP(status)).json(data);
+  }
 }
