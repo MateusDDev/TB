@@ -4,10 +4,10 @@ import { MessageType, ServiceResponse } from '../../interfaces/ServiceResponse';
 
 export default class Schemas {
   private matchSchema = Joi.object<INewMatch>({
-    awayTeamGoals: Joi.number().min(1).required(),
-    awayTeamId: Joi.number().min(1).required(),
-    homeTeamGoals: Joi.number().min(1).required(),
-    homeTeamId: Joi.number().min(1).required(),
+    awayTeamGoals: Joi.number().integer().min(0).required(),
+    awayTeamId: Joi.number().integer().min(1).required(),
+    homeTeamGoals: Joi.number().integer().min(0).required(),
+    homeTeamId: Joi.number().integer().min(1).required(),
   });
 
   private static verifyTeams(homeId: number, awayId: number): ServiceResponse<MessageType> | null {
