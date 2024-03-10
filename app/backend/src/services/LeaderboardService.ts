@@ -1,15 +1,30 @@
 import { ServiceResponse } from '../interfaces/ServiceResponse';
 import MatchModel from '../models/MatchModel';
-import { ILeaderboard } from '../interfaces/leaderboard/ILeaderboard';
+import { ILeaderboard, ITeamIdentifier } from '../interfaces/leaderboard/ILeaderboard';
+import { IMatchWithAssociations } from '../interfaces/matches/IMatch';
 
 export default class LeaderboardService {
   constructor(
     private matchModel = new MatchModel(),
   ) {}
 
-  private static matchResult(homeGoals: number, awayGoals: number): number {
-    if (homeGoals > awayGoals) return 3;
-    if (homeGoals === awayGoals) return 1;
+  private static teamIdentifier(isHomeTeam: boolean, match: IMatchWithAssociations):
+  ITeamIdentifier {
+    if (isHomeTeam) {
+      return {
+        teamId: match.homeTeamId,
+        matchResult: LeaderboardService.matchResult(match.homeTeamGoals, match.awayTeamGoals),
+      };
+    }
+    return {
+      teamId: match.awayTeamId,
+      matchResult: LeaderboardService.matchResult(match.awayTeamGoals, match.homeTeamGoals),
+    };
+  }
+
+  private static matchResult(goalsFavor: number, goalsOwn: number): number {
+    if (goalsFavor > goalsOwn) return 3;
+    if (goalsFavor === goalsOwn) return 1;
     return 0;
   }
 
@@ -22,55 +37,70 @@ export default class LeaderboardService {
     return scored - conceded;
   }
 
-  private async getTotalPoints(teamId: number): Promise<number> {
+  private async getTotalPoints(teamId: number, isHomeTeam: boolean): Promise<number> {
     const matches = await this.matchModel.findAllByStatus('false');
 
-    const results = matches.filter((match) => match.homeTeamId === teamId)
-      .map((m) => LeaderboardService.matchResult(m.homeTeamGoals, m.awayTeamGoals));
+    const results: number[] = matches.filter(
+      (match) => LeaderboardService.teamIdentifier(isHomeTeam, match).teamId === teamId,
+    )
+      .map((m) => LeaderboardService.teamIdentifier(isHomeTeam, m).matchResult);
 
     return results.reduce((acc, value) => acc + value, 0);
   }
 
-  private async getTotalGames(teamId: number): Promise<number> {
+  private async getTotalGames(teamId: number, isHomeTeam: boolean): Promise<number> {
     const matches = await this.matchModel.findAllByStatus('false');
 
-    return matches.filter((match) => match.homeTeamId === teamId).length;
+    return matches.filter(
+      (match) => LeaderboardService.teamIdentifier(isHomeTeam, match).teamId === teamId,
+    ).length;
   }
 
-  private async getMatchResults(teamId: number, resultType: 3 | 0 | 1): Promise<number> {
+  private async getMatchResults(teamId: number, resultType: 3 | 0 | 1, isHomeTeam: boolean):
+  Promise<number> {
     const matches = await this.matchModel.findAllByStatus('false');
 
-    const victories: number[] = matches.filter((match) => match.homeTeamId === teamId).map((m) => {
-      const result = LeaderboardService.matchResult(m.homeTeamGoals, m.awayTeamGoals);
+    const victories: number[] = matches.filter(
+      (match) => LeaderboardService.teamIdentifier(isHomeTeam, match).teamId === teamId,
+    ).map((m) => {
+      const { matchResult } = LeaderboardService.teamIdentifier(isHomeTeam, m);
 
-      if (result === resultType) return 1;
+      if (matchResult === resultType) return 1;
       return 0;
     });
 
     return victories.reduce((acc, value) => acc + value, 0);
   }
 
-  private async getTeamGoals(teamId: number, isFavor: boolean): Promise<number> {
+  private async getTeamGoals(teamId: number, isFavor: boolean, isHomeTeam: boolean):
+  Promise<number> {
     const matches = await this.matchModel.findAllByStatus('false');
 
-    const goals = matches.filter((match) => match.homeTeamId === teamId)
-      .map((m) => (isFavor ? m.homeTeamGoals : m.awayTeamGoals));
+    const goals = matches.filter(
+      (match) => LeaderboardService.teamIdentifier(isHomeTeam, match).teamId === teamId,
+    )
+      .map((m) => {
+        if (isHomeTeam) {
+          return isFavor ? m.homeTeamGoals : m.awayTeamGoals;
+        }
+        return isFavor ? m.awayTeamGoals : m.homeTeamGoals;
+      });
 
     return goals.reduce((acc, value) => acc + value, 0);
   }
 
-  private async buildBoard(homeTeamId: number, homeTeamName: string):
+  private async buildBoard(teamId: number, teamName: string, isHomeTeam: boolean):
   Promise<Omit<ILeaderboard, 'goalsBalance' | 'efficiency'>> {
-    const totalPoints = await this.getTotalPoints(homeTeamId);
-    const totalGames = await this.getTotalGames(homeTeamId);
-    const totalVictories = await this.getMatchResults(homeTeamId, 3);
-    const totalDraws = await this.getMatchResults(homeTeamId, 1);
-    const totalLosses = await this.getMatchResults(homeTeamId, 0);
-    const goalsFavor = await this.getTeamGoals(homeTeamId, true);
-    const goalsOwn = await this.getTeamGoals(homeTeamId, false);
+    const totalPoints = await this.getTotalPoints(teamId, isHomeTeam);
+    const totalGames = await this.getTotalGames(teamId, isHomeTeam);
+    const totalVictories = await this.getMatchResults(teamId, 3, isHomeTeam);
+    const totalDraws = await this.getMatchResults(teamId, 1, isHomeTeam);
+    const totalLosses = await this.getMatchResults(teamId, 0, isHomeTeam);
+    const goalsFavor = await this.getTeamGoals(teamId, true, isHomeTeam);
+    const goalsOwn = await this.getTeamGoals(teamId, false, isHomeTeam);
 
     return {
-      name: homeTeamName,
+      name: teamName,
       totalPoints,
       totalGames,
       totalVictories,
@@ -109,11 +139,15 @@ export default class LeaderboardService {
     }, []);
   }
 
-  async getLeaderboard(): Promise<ServiceResponse<ILeaderboard[]>> {
+  async getLeaderboard(isHomeTeam: boolean): Promise<ServiceResponse<ILeaderboard[]>> {
     const matches = await this.matchModel.findAllByStatus('false');
 
-    const boardPromises = matches.map(async ({ homeTeamId, homeTeam }) => {
-      const build = await this.buildBoard(homeTeamId, homeTeam.teamName);
+    const boardPromises = matches.map(async ({ homeTeamId, awayTeamId, homeTeam, awayTeam }) => {
+      const build = await this.buildBoard(
+        isHomeTeam ? homeTeamId : awayTeamId,
+        isHomeTeam ? homeTeam.teamName : awayTeam.teamName,
+        isHomeTeam,
+      );
 
       const board: ILeaderboard = {
         ...build,
@@ -127,9 +161,6 @@ export default class LeaderboardService {
     const board = await Promise.all(boardPromises);
     const uniqueTeams = LeaderboardService.getUniqueTeams(board);
     const orderedBoard = LeaderboardService.orderLeaderboard(uniqueTeams);
-    return {
-      status: 'SUCCESSFUL',
-      data: orderedBoard,
-    };
+    return { status: 'SUCCESSFUL', data: orderedBoard };
   }
 }

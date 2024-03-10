@@ -10,3 +10,8 @@ export interface ILeaderboard {
   goalsBalance: number,
   efficiency: number,
 }
+
+export interface ITeamIdentifier {
+  teamId: number,
+  matchResult: number,
+}
