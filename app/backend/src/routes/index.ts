@@ -6,9 +6,9 @@ import leaderboardRouter from './leaderboardRoutes';
 
 const router = Router();
 
-router.use('/teams', teamsRouter);
-router.use('/login', loginRouter);
-router.use('/matches', matchRouter);
 router.use('/leaderboard', leaderboardRouter);
+router.use('/teams', teamsRouter);
+router.use('/matches', matchRouter);
+router.use('/login', loginRouter);
 
 export default router;

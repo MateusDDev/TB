@@ -9,12 +9,10 @@ router.get(
   '/home',
   (req: Request, res: Response) => leaderboardController.getHomeLeaderboard(req, res),
 );
-
 router.get(
   '/away',
   (req: Request, res: Response) => leaderboardController.getAwayLeaderboard(req, res),
 );
-
 router.get(
   '/',
   (req: Request, res: Response) => leaderboardController.getDefaultLeaderboard(req, res),

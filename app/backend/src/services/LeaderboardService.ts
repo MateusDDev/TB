@@ -37,9 +37,11 @@ export default class LeaderboardService {
     return scored - conceded;
   }
 
-  private async getTotalPoints(teamId: number, isHomeTeam: boolean): Promise<number> {
-    const matches = await this.matchModel.findAllByStatus('false');
-
+  private static async getTotalPoints(
+    teamId: number,
+    isHomeTeam: boolean,
+    matches: IMatchWithAssociations[],
+  ): Promise<number> {
     const results: number[] = matches.filter(
       (match) => LeaderboardService.teamIdentifier(isHomeTeam, match).teamId === teamId,
     )
@@ -48,18 +50,22 @@ export default class LeaderboardService {
     return results.reduce((acc, value) => acc + value, 0);
   }
 
-  private async getTotalGames(teamId: number, isHomeTeam: boolean): Promise<number> {
-    const matches = await this.matchModel.findAllByStatus('false');
-
+  private static async getTotalGames(
+    teamId: number,
+    isHomeTeam: boolean,
+    matches: IMatchWithAssociations[],
+  ): Promise<number> {
     return matches.filter(
       (match) => LeaderboardService.teamIdentifier(isHomeTeam, match).teamId === teamId,
     ).length;
   }
 
-  private async getMatchResults(teamId: number, resultType: 3 | 0 | 1, isHomeTeam: boolean):
-  Promise<number> {
-    const matches = await this.matchModel.findAllByStatus('false');
-
+  private static async getMatchResults(
+    teamId: number,
+    resultType: 3 | 0 | 1,
+    isHomeTeam: boolean,
+    matches: IMatchWithAssociations[],
+  ): Promise<number> {
     const victories: number[] = matches.filter(
       (match) => LeaderboardService.teamIdentifier(isHomeTeam, match).teamId === teamId,
     ).map((m) => {
@@ -72,10 +78,12 @@ export default class LeaderboardService {
     return victories.reduce((acc, value) => acc + value, 0);
   }
 
-  private async getTeamGoals(teamId: number, isFavor: boolean, isHomeTeam: boolean):
-  Promise<number> {
-    const matches = await this.matchModel.findAllByStatus('false');
-
+  private static async getTeamGoals(
+    teamId: number,
+    isFavor: boolean,
+    isHomeTeam: boolean,
+    matches: IMatchWithAssociations[],
+  ): Promise<number> {
     const goals = matches.filter(
       (match) => LeaderboardService.teamIdentifier(isHomeTeam, match).teamId === teamId,
     )
@@ -89,25 +97,21 @@ export default class LeaderboardService {
     return goals.reduce((acc, value) => acc + value, 0);
   }
 
-  private async buildBoard(teamId: number, teamName: string, isHomeTeam: boolean):
-  Promise<Omit<ILeaderboard, 'goalsBalance' | 'efficiency'>> {
-    const totalPoints = await this.getTotalPoints(teamId, isHomeTeam);
-    const totalGames = await this.getTotalGames(teamId, isHomeTeam);
-    const totalVictories = await this.getMatchResults(teamId, 3, isHomeTeam);
-    const totalDraws = await this.getMatchResults(teamId, 1, isHomeTeam);
-    const totalLosses = await this.getMatchResults(teamId, 0, isHomeTeam);
-    const goalsFavor = await this.getTeamGoals(teamId, true, isHomeTeam);
-    const goalsOwn = await this.getTeamGoals(teamId, false, isHomeTeam);
-
+  private static async buildBoard(
+    teamId: number,
+    teamName: string,
+    isHomeTeam: boolean,
+    matches: IMatchWithAssociations[],
+  ): Promise<Omit<ILeaderboard, 'goalsBalance' | 'efficiency'>> {
     return {
       name: teamName,
-      totalPoints,
-      totalGames,
-      totalVictories,
-      totalDraws,
-      totalLosses,
-      goalsFavor,
-      goalsOwn,
+      totalPoints: await LeaderboardService.getTotalPoints(teamId, isHomeTeam, matches),
+      totalGames: await LeaderboardService.getTotalGames(teamId, isHomeTeam, matches),
+      totalVictories: await LeaderboardService.getMatchResults(teamId, 3, isHomeTeam, matches),
+      totalDraws: await LeaderboardService.getMatchResults(teamId, 1, isHomeTeam, matches),
+      totalLosses: await LeaderboardService.getMatchResults(teamId, 0, isHomeTeam, matches),
+      goalsFavor: await LeaderboardService.getTeamGoals(teamId, true, isHomeTeam, matches),
+      goalsOwn: await LeaderboardService.getTeamGoals(teamId, false, isHomeTeam, matches),
     };
   }
 
@@ -143,17 +147,16 @@ export default class LeaderboardService {
     const matches = await this.matchModel.findAllByStatus('false');
 
     const boardPromises = matches.map(async ({ homeTeamId, awayTeamId, homeTeam, awayTeam }) => {
-      const build = await this.buildBoard(
+      const build = await LeaderboardService.buildBoard(
         isHomeTeam ? homeTeamId : awayTeamId,
         isHomeTeam ? homeTeam.teamName : awayTeam.teamName,
         isHomeTeam,
+        matches,
       );
 
-      const board: ILeaderboard = {
-        ...build,
+      const board: ILeaderboard = { ...build,
         goalsBalance: LeaderboardService.goalDifference(build.goalsFavor, build.goalsOwn),
-        efficiency: LeaderboardService.teamPerformance(build.totalPoints, build.totalGames),
-      };
+        efficiency: LeaderboardService.teamPerformance(build.totalPoints, build.totalGames) };
 
       return board;
     });
